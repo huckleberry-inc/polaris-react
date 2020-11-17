@@ -6,6 +6,7 @@ import {Link} from 'components';
 
 import {Tooltip} from '../Tooltip';
 import {TooltipOverlay} from '../components';
+import {Key} from '../../../types';
 
 describe('<Tooltip />', () => {
   const tooltip = mountWithAppProvider(
@@ -80,6 +81,21 @@ describe('<Tooltip />', () => {
     );
     expect(tooltip).toContainReactComponent(TooltipOverlay, {
       accessibilityLabel,
+    });
+  });
+
+  it('closes itself when escape is pressed on keyup', () => {
+    const tooltip = mountWithApp(
+      <Tooltip active content="This order has shipping labels.">
+        <div>Order #1001</div>
+      </Tooltip>,
+    );
+
+    tooltip.find('span')!.trigger('onKeyUp', {
+      keyCode: Key.Escape,
+    });
+    expect(tooltip).toContainReactComponent(TooltipOverlay, {
+      active: false,
     });
   });
 });
