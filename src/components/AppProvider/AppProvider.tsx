@@ -1,9 +1,10 @@
-import React, {Component} from 'react';
+import React, {Component, RefObject} from 'react';
 
 import type {ThemeConfig} from '../../utilities/theme';
 import {ThemeProvider} from '../ThemeProvider';
 import {MediaQueryProvider} from '../MediaQueryProvider';
 import {FocusManager} from '../FocusManager';
+import {PortalsManager} from '../PortalsManager';
 import {I18n, I18nContext} from '../../utilities/i18n';
 import {
   ScrollLockManager,
@@ -20,10 +21,6 @@ import {
   UniqueIdFactoryContext,
   globalIdGeneratorFactory,
 } from '../../utilities/unique-id';
-import {
-  PortalsManagerProvider,
-  PortalsContainer,
-} from '../../utilities/portals';
 
 import './AppProvider.scss';
 
@@ -49,12 +46,14 @@ export class AppProvider extends Component<AppProviderProps, State> {
   private stickyManager: StickyManager;
   private scrollLockManager: ScrollLockManager;
   private uniqueIdFactory: UniqueIdFactory;
+  private portalsContainerRef: RefObject<HTMLDivElement>;
 
   constructor(props: AppProviderProps) {
     super(props);
     this.stickyManager = new StickyManager();
     this.scrollLockManager = new ScrollLockManager();
     this.uniqueIdFactory = new UniqueIdFactory(globalIdGeneratorFactory);
+    this.portalsContainerRef = React.createRef();
 
     const {i18n, linkComponent} = this.props;
 
@@ -103,10 +102,15 @@ export class AppProvider extends Component<AppProviderProps, State> {
                 <LinkContext.Provider value={link}>
                   <ThemeProvider theme={theme}>
                     <MediaQueryProvider>
-                      <PortalsManagerProvider>
+                      <PortalsManager
+                        container={this.portalsContainerRef.current}
+                      >
                         <FocusManager>{children}</FocusManager>
-                        <PortalsContainer />
-                      </PortalsManagerProvider>
+                        <div
+                          id="PolarisPortalsContainer"
+                          ref={this.portalsContainerRef}
+                        />
+                      </PortalsManager>
                     </MediaQueryProvider>
                   </ThemeProvider>
                 </LinkContext.Provider>
