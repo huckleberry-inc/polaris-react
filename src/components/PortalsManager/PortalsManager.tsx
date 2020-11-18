@@ -1,10 +1,13 @@
-import React from 'react';
+import React, {RefObject} from 'react';
 
-import {PortalsManagerContext} from '../../utilities/portals/context';
+import {
+  PortalsManagerContext,
+  PortalsContainerElement,
+} from '../../utilities/portals';
 
 export interface PortalsManagerProps {
   children: React.ReactNode;
-  container: HTMLElement | HTMLBodyElement | null;
+  container: RefObject<PortalsContainerElement>;
 }
 
 export function PortalsManager({children, container}: PortalsManagerProps) {

@@ -30,10 +30,10 @@ export function Portal({
     }
   }, [onPortalCreated, isMounted]);
 
-  return portalsContext && portalsContext.container
+  return portalsContext && portalsContext.container.current
     ? createPortal(
         <div data-portal-id={portalId}>{children}</div>,
-        portalsContext.container,
+        portalsContext.container.current,
       )
     : null;
 }

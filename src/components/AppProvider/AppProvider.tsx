@@ -102,9 +102,7 @@ export class AppProvider extends Component<AppProviderProps, State> {
                 <LinkContext.Provider value={link}>
                   <ThemeProvider theme={theme}>
                     <MediaQueryProvider>
-                      <PortalsManager
-                        container={this.portalsContainerRef.current}
-                      >
+                      <PortalsManager container={this.portalsContainerRef}>
                         <FocusManager>{children}</FocusManager>
                         <div
                           id="PolarisPortalsContainer"

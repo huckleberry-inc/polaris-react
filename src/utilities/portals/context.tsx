@@ -1,7 +1,9 @@
-import {createContext} from 'react';
+import {createContext, RefObject} from 'react';
+
+import {PortalsContainerElement} from './types';
 
 export interface PortalsManager {
-  container: HTMLElement | HTMLBodyElement | null;
+  container: RefObject<PortalsContainerElement>;
 }
 
 export const PortalsManagerContext = createContext<PortalsManager | undefined>(
