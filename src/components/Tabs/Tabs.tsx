@@ -223,7 +223,7 @@ class TabsInner extends PureComponent<CombinedProps, State> {
 
     let newFocus = tabsArrayInOrder.indexOf(tabToFocus);
 
-    if (key === 'ArrowRight' || key === 'ArrowDown') {
+    if (key === 'ArrowRight') {
       newFocus += 1;
 
       if (newFocus === tabsArrayInOrder.length) {
@@ -231,7 +231,7 @@ class TabsInner extends PureComponent<CombinedProps, State> {
       }
     }
 
-    if (key === 'ArrowLeft' || key === 'ArrowUp') {
+    if (key === 'ArrowLeft') {
       if (newFocus === -1 || newFocus === 0) {
         newFocus = tabsArrayInOrder.length - 1;
       } else {
@@ -392,8 +392,6 @@ function handleKeyDown(event: React.KeyboardEvent<HTMLElement>) {
   const {key} = event;
 
   if (
-    key === 'ArrowUp' ||
-    key === 'ArrowDown' ||
     key === 'ArrowLeft' ||
     key === 'ArrowRight'
   ) {
