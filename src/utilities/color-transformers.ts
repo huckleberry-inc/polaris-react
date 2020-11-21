@@ -1,6 +1,6 @@
 import {clamp} from './clamp';
 import {names} from './color-map';
-
+import {compose} from './compose';
 import type {
   RGBColor,
   RGBAColor,
