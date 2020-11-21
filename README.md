@@ -31,7 +31,7 @@ yarn add @shopify/polaris
 1.  Import the CSS directly into your project if your asset packager supports it:
 
 ```js
-import '@shopify/polaris/styles.css';
+import '@shopify/polaris/dist/styles.css';
 ```
 
 Otherwise include the CSS in your HTML. We suggest copying the styles file into your own project, but you may also use it directly:
@@ -39,7 +39,7 @@ Otherwise include the CSS in your HTML. We suggest copying the styles file into 
 ```html
 <link
   rel="stylesheet"
-  href="https://unpkg.com/@shopify/polaris@4.21.0/styles.min.css"
+  href="https://unpkg.com/@shopify/polaris@5.10.1/dist/styles.css"
 />
 ```
 
@@ -65,12 +65,6 @@ ReactDOM.render(
 );
 ```
 
-### Building an embedded app
-
-We provide React wrappers around the Shopify App Bridge (formerly known as the EASDK). You don’t need to go through the initialization of the Shopify App Bridge as described in the docs. Instead, [configure the connection to the Shopify admin through the app provider component](https://github.com/Shopify/polaris-react/blob/master/documentation/Embedded%20apps.md).
-
-If you need help using Shopify App Bridge, the Embedded App SDK, or the POS App SDK, please visit our [API & SDK forum](https://community.shopify.com/c/Shopify-APIs-SDKs/bd-p/shopify-apis-and-technology). It is the best place to discuss the libraries, get support, notify us about bugs, or request features.
-
 ## Using the CSS components
 
 If React doesn’t make sense for your application, you can use a CSS-only version of our components. This includes all the styles you need for every component in the library, but you’ll be responsible for writing the correct markup and updating classes and DOM attributes in response to user events.
@@ -82,7 +76,7 @@ If React doesn’t make sense for your application, you can use a CSS-only versi
 ```html
 <link
   rel="stylesheet"
-  href="https://unpkg.com/@shopify/polaris@4.21.0/styles.min.css"
+  href="https://unpkg.com/@shopify/polaris@5.10.1/dist/styles.css"
 />
 ```
 
@@ -105,6 +99,26 @@ We have created example applications to document some of the ways you could incl
 ## Development
 
 We use Storybook to create a simple, hot-reloading playground for development on these components. You can edit the `playground/Playground.tsx` file to import the components you are working on, and run `yarn dev` in order to start the development server. Please do not commit your work on the playground so that it remains pristine for other developers to work on.
+
+### Testing the new design language
+
+Old design language (default):
+
+```bash
+yarn dev
+```
+
+New design language (light mode):
+
+```bash
+STORYBOOK_NEWDESIGNLANGUAGE=light yarn dev
+```
+
+New design language (dark mode):
+
+```bash
+STORYBOOK_NEWDESIGNLANGUAGE=dark yarn dev
+```
 
 ### Testing on mobile or a virtual machine
 
@@ -141,7 +155,7 @@ Also, when running `yarn install`, copied builds will be overwritten and will re
 
 [Percy](https://percy.io/) runs for every pull request. Percy is a tool that compares screenshots for every single component we have in the library.
 
-Percy is not always 100% accurate. Since it uses screenshot comparison, even browser sub-pixel rendering differences can cause Percy to ask for user confirmation of whether a change was intended or not. In cases like that, use your best judgement to determine whether you need to address it or not. This is why the choice to approve something or not is always manual. While everyone can view changes, only members of the Shopify team an approve changes.
+Percy is not always 100% accurate. Since it uses screenshot comparison, even browser sub-pixel rendering differences can cause Percy to ask for user confirmation of whether a change was intended or not. In cases like that, use your best judgment to determine whether you need to address it or not. This is why the choice to approve something or not is always manual. While everyone can view changes, only members of the Shopify team can approve changes.
 
 #### Manual visual regression testing
 

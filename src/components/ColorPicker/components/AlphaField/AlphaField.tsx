@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {clamp} from '@shopify/javascript-utilities/math';
 
+import {clamp} from '../../../../utilities/clamp';
 import {useI18n} from '../../../../utilities/i18n';
 import {TextField} from '../../../TextField';
 import styles from '../../ColorPicker.scss';

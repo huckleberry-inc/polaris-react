@@ -1,4 +1,5 @@
 import React, {
+  Children,
   useRef,
   useEffect,
   useCallback,
@@ -6,8 +7,9 @@ import React, {
   AriaAttributes,
 } from 'react';
 
+import type {InversableColorScheme} from '../ThemeProvider';
 import {
-  findFirstFocusableNode,
+  findFirstFocusableNodeIncludingDisabled,
   focusNextFocusableNode,
 } from '../../utilities/focus';
 import {Portal} from '../Portal';
@@ -46,8 +48,10 @@ export interface PopoverProps {
    * @default 'div'
    */
   activatorWrapper?: string;
-  /** Prevent automatic focus of the first field on activation */
+  /** Prevent automatic focus of the popover on activation */
   preventAutofocus?: boolean;
+  /** Prevents focusing the activator or the next focusable element when the popover is deactivated */
+  preventFocusOnClose?: boolean;
   /** Automatically add wrap content in a section */
   sectioned?: boolean;
   /** Allow popover to stretch to the full width of its activator */
@@ -60,8 +64,12 @@ export interface PopoverProps {
   fixed?: boolean;
   /** Used to illustrate the type of popover element */
   ariaHaspopup?: AriaAttributes['aria-haspopup'];
+  /** Allow the popover overlay to be hidden when printing */
+  hideOnPrint?: boolean;
   /** Callback when popover is closed */
   onClose(source: PopoverCloseSource): void;
+  /** Accepts a color scheme for the contents of the popover */
+  colorScheme?: InversableColorScheme;
 }
 
 // TypeScript can't generate types that correctly infer the typing of
@@ -77,10 +85,12 @@ export const Popover: React.FunctionComponent<PopoverProps> & {
   children,
   onClose,
   activator,
+  preventFocusOnClose,
   active,
   fixed,
   ariaHaspopup,
   preferInputActivator = true,
+  colorScheme,
   ...rest
 }: PopoverProps) {
   const [activatorNode, setActivatorNode] = useState<HTMLElement>();
@@ -93,7 +103,9 @@ export const Popover: React.FunctionComponent<PopoverProps> & {
       return;
     }
 
-    const firstFocusable = findFirstFocusableNode(activatorContainer.current);
+    const firstFocusable = findFirstFocusableNodeIncludingDisabled(
+      activatorContainer.current,
+    );
     const focusableActivator: HTMLElement & {
       disabled?: boolean;
     } = firstFocusable || activatorContainer.current;
@@ -111,8 +123,7 @@ export const Popover: React.FunctionComponent<PopoverProps> & {
 
   const handleClose = (source: PopoverCloseSource) => {
     onClose(source);
-
-    if (activatorContainer.current == null) {
+    if (activatorContainer.current == null || preventFocusOnClose) {
       return;
     }
 
@@ -122,8 +133,8 @@ export const Popover: React.FunctionComponent<PopoverProps> & {
       activatorNode
     ) {
       const focusableActivator =
-        findFirstFocusableNode(activatorNode) ||
-        findFirstFocusableNode(activatorContainer.current) ||
+        findFirstFocusableNodeIncludingDisabled(activatorNode) ||
+        findFirstFocusableNodeIncludingDisabled(activatorContainer.current) ||
         activatorContainer.current;
       if (!focusNextFocusableNode(focusableActivator, isInPortal)) {
         focusableActivator.focus();
@@ -166,6 +177,7 @@ export const Popover: React.FunctionComponent<PopoverProps> & {
         onClose={handleClose}
         active={active}
         fixed={fixed}
+        colorScheme={colorScheme}
         {...rest}
       >
         {children}
@@ -175,7 +187,7 @@ export const Popover: React.FunctionComponent<PopoverProps> & {
 
   return (
     <WrapperComponent ref={activatorContainer}>
-      {React.Children.only(activator)}
+      {Children.only(activator)}
       {portal}
     </WrapperComponent>
   );

@@ -11,11 +11,6 @@ import {Key} from '../../../../../types';
 import {PositionedOverlay} from '../../../../PositionedOverlay';
 import {PopoverOverlay} from '../PopoverOverlay';
 
-jest.mock('@shopify/javascript-utilities/fastdom', () => ({
-  ...jest.requireActual('@shopify/javascript-utilities/fastdom'),
-  write: jest.fn((callback) => callback()),
-}));
-
 interface HandlerMap {
   [eventName: string]: (event: any) => void;
 }
@@ -25,6 +20,8 @@ const listenerMap: HandlerMap = {};
 describe('<PopoverOverlay />', () => {
   let addEventListener: jest.SpyInstance;
   let removeEventListener: jest.SpyInstance;
+
+  let rafSpy: jest.SpyInstance;
 
   beforeEach(() => {
     addEventListener = jest.spyOn(document, 'addEventListener');
@@ -36,6 +33,9 @@ describe('<PopoverOverlay />', () => {
     removeEventListener.mockImplementation((event) => {
       listenerMap[event] = noop;
     });
+
+    rafSpy = jest.spyOn(window, 'requestAnimationFrame');
+    rafSpy.mockImplementation((callback) => callback());
   });
 
   afterEach(() => {
@@ -45,6 +45,8 @@ describe('<PopoverOverlay />', () => {
 
     addEventListener.mockRestore();
     removeEventListener.mockRestore();
+
+    rafSpy.mockRestore();
   });
 
   const activator = document.createElement('button');
@@ -156,6 +158,26 @@ describe('<PopoverOverlay />', () => {
         activator={activator}
         onClose={noop}
         fixed
+        preferInputActivator={false}
+      >
+        {children}
+      </PopoverOverlay>,
+    );
+
+    expect(
+      popoverOverlay.find(PositionedOverlay).prop('preferInputActivator'),
+    ).toBe(false);
+  });
+
+  it("doesn't include a tabindex prop when preventAutofocus is true", () => {
+    const popoverOverlay = mountWithAppProvider(
+      <PopoverOverlay
+        active
+        id="PopoverOverlay-1"
+        activator={activator}
+        onClose={noop}
+        fixed
+        preventAutofocus
         preferInputActivator={false}
       >
         {children}

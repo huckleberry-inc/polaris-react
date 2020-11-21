@@ -1,6 +1,6 @@
-import {clamp} from '@shopify/javascript-utilities/math';
-
+import {clamp} from './clamp';
 import {names} from './color-map';
+
 import type {
   RGBColor,
   RGBAColor,
@@ -10,7 +10,6 @@ import type {
   HSLAColor,
   HSBLAColor,
 } from './color-types';
-import {compose} from './compose';
 
 const nameHexMap: Record<string, string> = names;
 
@@ -136,11 +135,11 @@ export function hslToRgb(color: HSLAColor): RGBAColor {
 
 // ref https://en.wikipedia.org/wiki/HSL_and_HSV
 function rgbToHsbl(color: RGBAColor, type: 'b' | 'l' = 'b'): HSBLAColor {
-  const {red: r, green: g, blue: b, alpha = 1} = color;
+  const {alpha = 1} = color;
 
-  const red = r / 255;
-  const green = g / 255;
-  const blue = b / 255;
+  const red = color.red / 255;
+  const green = color.green / 255;
+  const blue = color.blue / 255;
 
   const largestComponent = Math.max(red, green, blue);
   const smallestComponent = Math.min(red, green, blue);
@@ -177,7 +176,7 @@ function rgbToHsbl(color: RGBAColor, type: 'b' | 'l' = 'b'): HSBLAColor {
   return {
     hue: clamp(hue, 0, 360) || 0,
     saturation: parseFloat(clamp(saturation, 0, 1).toFixed(2)),
-    brightness: parseFloat(clamp(largestComponent, 0, 1).toFixed(2)),
+    brightness: parseFloat(clamp(largestComponent, 0, 1).toFixed(4)),
     lightness: parseFloat(lightness.toFixed(2)),
     alpha: parseFloat(alpha.toFixed(2)),
   };
@@ -220,41 +219,35 @@ export function hexToRgb(color: string) {
   return {red, green, blue};
 }
 
-export enum ColorType {
-  Hex = 'hex',
-  Rgb = 'rgb',
-  Rgba = 'rgba',
-  Hsl = 'hsl',
-  Hsla = 'hsla',
-  Default = 'default',
-}
+type ColorType = 'hex' | 'rgb' | 'rgba' | 'hsl' | 'hsla' | 'default';
 
 function getColorType(color: string): ColorType {
   if (color.includes('#')) {
-    return ColorType.Hex;
+    return 'hex';
   } else if (color.includes('rgb')) {
-    return ColorType.Rgb;
+    return 'rgb';
   } else if (color.includes('rgba')) {
-    return ColorType.Rgba;
+    return 'rgba';
   } else if (color.includes('hsl')) {
-    return ColorType.Hsl;
+    return 'hsl';
   } else if (color.includes('hsla')) {
-    return ColorType.Hsla;
+    return 'hsla';
   } else {
     if (process.env.NODE_ENV === 'development') {
       /* eslint-disable-next-line no-console */
       console.warn('Accepted colors formats are: hex, rgb, rgba, hsl and hsla');
     }
-    return ColorType.Default;
+    return 'default';
   }
 }
 
-export function hslToString(hslColor: HSLAColor | string) {
+export function hslToString(hslColor: HSLColor | HSLAColor | string) {
   if (typeof hslColor === 'string') {
     return hslColor;
   }
 
-  const {alpha = 1, hue, lightness, saturation} = hslColor;
+  const alpha = 'alpha' in hslColor ? hslColor.alpha : 1;
+  const {hue, lightness, saturation} = hslColor;
   return `hsla(${hue}, ${saturation}%, ${lightness}%, ${alpha})`;
 }
 
@@ -284,12 +277,13 @@ function rgbToObject(color: string): RGBAColor {
   return objColor;
 }
 
-const hexToHsla: (color: string) => HSLAColor = compose(rgbToHsl, hexToRgb);
+function hexToHsla(color: string): HSLAColor {
+  return rgbToHsl(hexToRgb(color));
+}
 
-const rbgStringToHsla: (color: string) => HSLAColor = compose(
-  rgbToHsl,
-  rgbToObject,
-);
+function rbgStringToHsla(color: string): HSLAColor {
+  return rgbToHsl(rgbToObject(color));
+}
 
 function hslToObject(color: string): HSLAColor {
   // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
@@ -310,17 +304,17 @@ function hslToObject(color: string): HSLAColor {
 }
 
 export function colorToHsla(color: string): HSLAColor {
-  const type: ColorType = getColorType(color);
+  const type = getColorType(color);
   switch (type) {
-    case ColorType.Hex:
+    case 'hex':
       return hexToHsla(color);
-    case ColorType.Rgb:
-    case ColorType.Rgba:
+    case 'rgb':
+    case 'rgba':
       return rbgStringToHsla(color);
-    case ColorType.Hsla:
-    case ColorType.Hsl:
+    case 'hsl':
+    case 'hsla':
       return hslToObject(color);
-    case ColorType.Default:
+    case 'default':
     default:
       throw new Error(
         'Accepted color formats are: hex, rgb, rgba, hsl and hsla',

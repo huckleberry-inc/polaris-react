@@ -1,5 +1,10 @@
-import React, {useState, useEffect, useRef, useCallback} from 'react';
-import {addEventListener} from '@shopify/javascript-utilities/events';
+import React, {
+  createElement,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from 'react';
 import {CircleCancelMinor} from '@shopify/polaris-icons';
 
 import {VisuallyHidden} from '../VisuallyHidden';
@@ -13,7 +18,7 @@ import {Connected} from '../Connected';
 import {Error, Key} from '../../types';
 import {Icon} from '../Icon';
 
-import {Resizer, Spinner} from './components';
+import {Resizer, Spinner, SpinnerProps} from './components';
 import styles from './TextField.scss';
 
 type Type =
@@ -32,6 +37,16 @@ type Type =
   | 'currency';
 
 type Alignment = 'left' | 'center' | 'right';
+
+type InputMode =
+  | 'none'
+  | 'text'
+  | 'decimal'
+  | 'numeric'
+  | 'tel'
+  | 'search'
+  | 'email'
+  | 'url';
 
 interface NonMutuallyExclusiveProps {
   /** Text to display before value */
@@ -90,10 +105,14 @@ interface NonMutuallyExclusiveProps {
   minLength?: number;
   /** A regular expression to check the value against */
   pattern?: string;
+  /** Choose the keyboard that should be used on mobile devices */
+  inputMode?: InputMode;
   /** Indicate whether value should have spelling checked */
   spellCheck?: boolean;
   /** Indicates the id of a component owned by the input */
   ariaOwns?: string;
+  /** Indicates whether or not a Popover is displayed */
+  ariaExpanded?: boolean;
   /** Indicates the id of a component controlled by the input */
   ariaControls?: string;
   /** Indicates the id of a related component’s visually focused element to the input */
@@ -150,9 +169,11 @@ export function TextField({
   min,
   minLength,
   pattern,
+  inputMode,
   spellCheck,
   ariaOwns,
   ariaControls,
+  ariaExpanded,
   ariaActiveDescendant,
   ariaAutocomplete,
   showCharacterCount,
@@ -297,15 +318,15 @@ export function TextField({
     clearTimeout(buttonPressTimer.current);
   }, []);
 
-  const handleButtonPress = useCallback(
-    (onChange: Function) => {
+  const handleButtonPress: SpinnerProps['onMouseDown'] = useCallback(
+    (onChange) => {
       const minInterval = 50;
       const decrementBy = 10;
       let interval = 200;
 
       const onChangeInterval = () => {
         if (interval > minInterval) interval -= decrementBy;
-        onChange();
+        onChange(0);
         buttonPressTimer.current = window.setTimeout(
           onChangeInterval,
           interval,
@@ -314,7 +335,7 @@ export function TextField({
 
       buttonPressTimer.current = window.setTimeout(onChangeInterval, interval);
 
-      addEventListener(document, 'mouseup', handleButtonRelease, {
+      document.addEventListener('mouseup', handleButtonRelease, {
         once: true,
       });
     },
@@ -322,7 +343,7 @@ export function TextField({
   );
 
   const spinnerMarkup =
-    type === 'number' && !disabled && !readOnly ? (
+    type === 'number' && step !== 0 && !disabled && !readOnly ? (
       <Spinner
         onChange={handleNumberChange}
         onMouseDown={handleButtonPress}
@@ -376,7 +397,7 @@ export function TextField({
     clearButton && styles['Input-hasClearButton'],
   );
 
-  const input = React.createElement(multiline ? 'textarea' : 'input', {
+  const input = createElement(multiline ? 'textarea' : 'input', {
     name,
     id,
     disabled,
@@ -400,6 +421,7 @@ export function TextField({
     maxLength,
     spellCheck,
     pattern,
+    inputMode,
     type: inputType,
     'aria-describedby': describedBy.length ? describedBy.join(' ') : undefined,
     'aria-labelledby': labelledBy.join(' '),
@@ -409,6 +431,7 @@ export function TextField({
     'aria-autocomplete': ariaAutocomplete,
     'aria-controls': ariaControls,
     'aria-multiline': normalizeAriaMultiline(multiline),
+    'aria-expanded': ariaExpanded,
   });
 
   const backdropClassName = classNames(

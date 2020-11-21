@@ -1,9 +1,9 @@
-import React from 'react';
+import React, {PureComponent} from 'react';
 import debounce from 'lodash/debounce';
-import {clamp} from '@shopify/javascript-utilities/math';
-
+import {clamp} from '../../utilities/clamp';
 import {classNames} from '../../utilities/css';
 import {hsbToRgb, hexToHsb} from '../../utilities/color-transformers';
+
 import type {HSBColor, HSBAColor} from '../../utilities/color-types';
 import {EventListener} from '../EventListener';
 
@@ -42,7 +42,7 @@ export interface ColorPickerProps {
   onChange(color: HSBAColor): void;
 }
 
-export class ColorPicker extends React.PureComponent<ColorPickerProps, State> {
+export class ColorPicker extends PureComponent<ColorPickerProps, State> {
   state: State = {
     pickerWidth: 0,
     pickerHeight: 0,

@@ -1,14 +1,11 @@
-import React from 'react';
-import {HorizontalDotsMinor} from '@shopify/polaris-icons';
+import React, {PureComponent} from 'react';
+import {HorizontalDotsMinor, CaretDownMinor} from '@shopify/polaris-icons';
 
 import {classNames} from '../../utilities/css';
 import {Icon} from '../Icon';
 import {Popover} from '../Popover';
-import {FeaturesContext} from '../../utilities/features';
-import {
-  withAppProvider,
-  WithAppProviderProps,
-} from '../../utilities/with-app-provider';
+import {useI18n} from '../../utilities/i18n';
+import {useFeatures} from '../../utilities/features';
 
 import type {TabDescriptor} from './types';
 import {getVisibleAndHiddenTabIndices} from './utilities';
@@ -24,11 +21,16 @@ export interface TabsProps {
   tabs: TabDescriptor[];
   /** Fit tabs to container */
   fitted?: boolean;
+  /** Text to replace disclosures horizontal dots */
+  disclosureText?: string;
   /** Callback when tab is selected */
   onSelect?(selectedTabIndex: number): void;
 }
 
-type CombinedProps = TabsProps & WithAppProviderProps;
+type CombinedProps = TabsProps & {
+  i18n: ReturnType<typeof useI18n>;
+  features: ReturnType<typeof useFeatures>;
+};
 
 interface State {
   disclosureWidth: number;
@@ -40,8 +42,7 @@ interface State {
   tabToFocus: number;
 }
 
-class TabsInner extends React.PureComponent<CombinedProps, State> {
-  static contextType = FeaturesContext;
+class TabsInner extends PureComponent<CombinedProps, State> {
   static getDerivedStateFromProps(nextProps: TabsProps, prevState: State) {
     const {disclosureWidth, tabWidths, containerWidth} = prevState;
     const {visibleTabs, hiddenTabs} = getVisibleAndHiddenTabIndices(
@@ -59,8 +60,6 @@ class TabsInner extends React.PureComponent<CombinedProps, State> {
     };
   }
 
-  context!: React.ContextType<typeof FeaturesContext>;
-
   state: State = {
     disclosureWidth: 0,
     containerWidth: Infinity,
@@ -77,11 +76,13 @@ class TabsInner extends React.PureComponent<CombinedProps, State> {
       selected,
       fitted,
       children,
-      polaris: {intl},
+      i18n,
+      features,
+      disclosureText,
     } = this.props;
     const {tabToFocus, visibleTabs, hiddenTabs, showDisclosure} = this.state;
     const disclosureTabs = hiddenTabs.map((tabIndex) => tabs[tabIndex]);
-    const {newDesignLanguage} = this.context || {};
+    const {newDesignLanguage} = features;
 
     const panelMarkup = children
       ? tabs.map((_tab, index) => {
@@ -109,6 +110,7 @@ class TabsInner extends React.PureComponent<CombinedProps, State> {
       .map((tabIndex) => this.renderTabMarkup(tabs[tabIndex], tabIndex));
 
     const disclosureActivatorVisible = visibleTabs.length < tabs.length;
+    const hasCustomDisclosure = Boolean(disclosureText);
 
     const classname = classNames(
       styles.Tabs,
@@ -127,17 +129,47 @@ class TabsInner extends React.PureComponent<CombinedProps, State> {
       disclosureActivatorVisible && styles['DisclosureTab-visible'],
     );
 
-    const activator = (
+    const disclosureActivatorClassName = classNames(
+      styles.TabContainer,
+      newDesignLanguage && styles.newDesignLanguage,
+    );
+
+    const disclosureButtonClassName = classNames(
+      styles.DisclosureActivator,
+      hasCustomDisclosure && styles.Tab,
+    );
+
+    const disclosureButtonContentWrapperClassName = classNames(
+      styles.Title,
+      hasCustomDisclosure && styles.titleWithIcon,
+    );
+
+    const disclosureButtonContent = hasCustomDisclosure ? (
+      <>
+        {disclosureText}
+        <Icon source={CaretDownMinor} color="inkLighter" />
+      </>
+    ) : (
+      <Icon source={HorizontalDotsMinor} />
+    );
+
+    const disclosureButton = (
       <button
         type="button"
-        className={styles.DisclosureActivator}
+        className={disclosureButtonClassName}
         onClick={this.handleDisclosureActivatorClick}
-        aria-label={intl.translate('Polaris.Tabs.toggleTabsLabel')}
+        aria-label={i18n.translate('Polaris.Tabs.toggleTabsLabel')}
       >
-        <span className={styles.Title}>
-          <Icon source={HorizontalDotsMinor} />
+        <span className={disclosureButtonContentWrapperClassName}>
+          {disclosureButtonContent}
         </span>
       </button>
+    );
+
+    const activator = disclosureText ? (
+      <div className={disclosureActivatorClassName}>{disclosureButton}</div>
+    ) : (
+      disclosureButton
     );
 
     return (
@@ -212,6 +244,7 @@ class TabsInner extends React.PureComponent<CombinedProps, State> {
     });
   };
 
+  // eslint-disable-next-line @shopify/react-no-multiple-render-methods
   private renderTabMarkup = (tab: TabDescriptor, index: number) => {
     const {selected} = this.props;
     const {tabToFocus} = this.state;
@@ -369,4 +402,9 @@ function handleKeyDown(event: React.KeyboardEvent<HTMLElement>) {
   }
 }
 
-export const Tabs = withAppProvider<TabsProps>()(TabsInner);
+export function Tabs(props: TabsProps) {
+  const i18n = useI18n();
+  const features = useFeatures();
+
+  return <TabsInner {...props} i18n={i18n} features={features} />;
+}

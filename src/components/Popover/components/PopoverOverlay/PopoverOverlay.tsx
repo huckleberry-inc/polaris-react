@@ -1,8 +1,7 @@
-import React, {createRef} from 'react';
-import {nodeContainsDescendant} from '@shopify/javascript-utilities/dom';
-import {write} from '@shopify/javascript-utilities/fastdom';
+import React, {PureComponent, Children, createRef} from 'react';
 import {durationBase} from '@shopify/polaris-tokens';
 
+import {InversableColorScheme, ThemeProvider} from '../../../ThemeProvider';
 import {classNames} from '../../../../utilities/css';
 import {
   isElementOfType,
@@ -47,17 +46,16 @@ export interface PopoverOverlayProps {
   preventAutofocus?: boolean;
   sectioned?: boolean;
   fixed?: boolean;
+  hideOnPrint?: boolean;
   onClose(source: PopoverCloseSource): void;
+  colorScheme?: InversableColorScheme;
 }
 
 interface State {
   transitionStatus: TransitionStatus;
 }
 
-export class PopoverOverlay extends React.PureComponent<
-  PopoverOverlayProps,
-  State
-> {
+export class PopoverOverlay extends PureComponent<PopoverOverlayProps, State> {
   state: State = {
     transitionStatus: this.props.active
       ? TransitionStatus.Entering
@@ -166,7 +164,7 @@ export class PopoverOverlay extends React.PureComponent<
       return;
     }
 
-    write(() => {
+    requestAnimationFrame(() => {
       if (this.contentNode.current == null) {
         return;
       }
@@ -177,6 +175,7 @@ export class PopoverOverlay extends React.PureComponent<
     });
   }
 
+  // eslint-disable-next-line @shopify/react-no-multiple-render-methods
   private renderPopover: PositionedOverlayProps['render'] = (
     overlayDetails,
   ) => {
@@ -189,6 +188,9 @@ export class PopoverOverlay extends React.PureComponent<
       fullWidth,
       fullHeight,
       fluidContent,
+      hideOnPrint,
+      colorScheme,
+      preventAutofocus,
     } = this.props;
 
     const className = classNames(
@@ -196,6 +198,7 @@ export class PopoverOverlay extends React.PureComponent<
       positioning === 'above' && styles.positionedAbove,
       fullWidth && styles.fullWidth,
       measuring && styles.measuring,
+      hideOnPrint && styles['PopoverOverlay-hideOnPrint'],
     );
 
     const contentStyles = measuring ? undefined : {height: desiredHeight};
@@ -209,7 +212,7 @@ export class PopoverOverlay extends React.PureComponent<
     const content = (
       <div
         id={id}
-        tabIndex={-1}
+        tabIndex={preventAutofocus ? undefined : -1}
         className={contentClassNames}
         style={contentStyles}
         ref={this.contentNode}
@@ -229,7 +232,9 @@ export class PopoverOverlay extends React.PureComponent<
           tabIndex={0}
           onFocus={this.handleFocusFirstItem}
         />
-        <div className={styles.Wrapper}>{content}</div>
+        <ThemeProvider theme={{colorScheme}}>
+          <div className={styles.Wrapper}>{content}</div>
+        </ThemeProvider>
         <div
           className={styles.FocusTracker}
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
@@ -281,9 +286,29 @@ function renderPopoverContent(
   children: React.ReactNode,
   props?: Partial<PaneProps>,
 ) {
-  const childrenArray = React.Children.toArray(children);
+  const childrenArray = Children.toArray(children);
   if (isElementOfType(childrenArray[0], Pane)) {
     return childrenArray;
   }
   return wrapWithComponent(childrenArray, Pane, props);
+}
+
+export function nodeContainsDescendant(
+  rootNode: HTMLElement,
+  descendant: HTMLElement,
+): boolean {
+  if (rootNode === descendant) {
+    return true;
+  }
+
+  let parent = descendant.parentNode;
+
+  while (parent != null) {
+    if (parent === rootNode) {
+      return true;
+    }
+    parent = parent.parentNode;
+  }
+
+  return false;
 }

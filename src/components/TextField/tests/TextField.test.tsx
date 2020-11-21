@@ -1,4 +1,4 @@
-import React, {ReactElement} from 'react';
+import React from 'react';
 // eslint-disable-next-line no-restricted-imports
 import {mountWithAppProvider, findByTestID} from 'test-utilities/legacy';
 import {InlineError, Labelled, Connected, Select} from 'components';
@@ -10,6 +10,7 @@ import {TextField} from '../TextField';
 describe('<TextField />', () => {
   it('allows specific props to pass through properties on the input', () => {
     const pattern = '\\d\\d';
+    const inputMode = 'numeric';
     const input = mountWithAppProvider(
       <TextField
         label="TextField"
@@ -26,6 +27,7 @@ describe('<TextField />', () => {
         maxLength={2}
         spellCheck={false}
         pattern={pattern}
+        inputMode={inputMode}
         align="left"
       />,
     ).find('input');
@@ -42,6 +44,7 @@ describe('<TextField />', () => {
     expect(input.prop('maxLength')).toBe(2);
     expect(input.prop('spellCheck')).toBe(false);
     expect(input.prop('pattern')).toBe(pattern);
+    expect(input.prop('inputMode')).toBe(inputMode);
   });
 
   it('blocks props not listed as component props to pass on the input', () => {
@@ -85,11 +88,11 @@ describe('<TextField />', () => {
   describe('onFocus()', () => {
     it('is called when the input is focused', () => {
       const spy = jest.fn();
-      mountWithAppProvider(
+      mountWithApp(
         <TextField label="TextField" onFocus={spy} onChange={noop} />,
       )
-        .find('input')
-        .simulate('focus');
+        .find('input')!
+        .trigger('onFocus');
       expect(spy).toHaveBeenCalled();
     });
   });
@@ -147,37 +150,31 @@ describe('<TextField />', () => {
 
   describe('focused', () => {
     it('input is in focus state if focused is true', () => {
-      const element = mountWithAppProvider(
+      const element = mountWithApp(
         <TextField label="TextField" onChange={noop} focused />,
       );
 
-      expect(element.getDOMNode().querySelector('input')).toBe(
-        document.activeElement,
-      );
+      expect(document.activeElement).toBe(element.find('input')!.domNode);
     });
 
     it('focuses input if focused is toggled', () => {
-      const element = mountWithAppProvider(
+      const element = mountWithApp(
         <TextField label="TextField" onChange={noop} />,
       );
 
       element.setProps({focused: true});
 
-      expect(element.getDOMNode().querySelector('input')).toBe(
-        document.activeElement,
-      );
+      expect(document.activeElement).toBe(element.find('input')!.domNode);
     });
 
     it('blurs input if focused is toggled', () => {
-      const element = mountWithAppProvider(
+      const element = mountWithApp(
         <TextField label="TextField" onChange={noop} focused />,
       );
 
       element.setProps({focused: false});
 
-      expect(element.getDOMNode().querySelector('input')).not.toBe(
-        document.activeElement,
-      );
+      expect(document.activeElement).not.toBe(element.find('input')!.domNode);
     });
   });
 
@@ -707,6 +704,20 @@ describe('<TextField />', () => {
         expect(element.find(Spinner)).toHaveLength(0);
       });
 
+      it('removes spinner buttons when type is number and step is 0', () => {
+        const spy = jest.fn();
+        const element = mountWithAppProvider(
+          <TextField
+            id="MyNumberField"
+            label="NumberField"
+            type="number"
+            step={0}
+            onChange={spy}
+          />,
+        );
+        expect(element.find(Spinner)).toHaveLength(0);
+      });
+
       it('increments by step when value, step, or both are float numbers', () => {
         const spy = jest.fn();
         const element = mountWithAppProvider(
@@ -890,6 +901,7 @@ describe('<TextField />', () => {
           onChange={noop}
           multiline={false}
           ariaOwns="Aria owns"
+          ariaExpanded
           ariaActiveDescendant="Aria active descendant"
           ariaAutocomplete="Aria autocomplete"
           ariaControls="Aria controls"
@@ -897,6 +909,7 @@ describe('<TextField />', () => {
       );
 
       expect(textField.find('input').prop('aria-owns')).toBe('Aria owns');
+      expect(textField.find('input').prop('aria-expanded')).toBe(true);
       expect(textField.find('input').prop('aria-activedescendant')).toBe(
         'Aria active descendant',
       );
@@ -1034,22 +1047,15 @@ describe('<TextField />', () => {
     });
 
     it('sets focus to the <input /> `onClick`', () => {
-      const textField = mountWithAppProvider(
+      const textField = mountWithApp(
         <TextField label="TextField" onChange={noop} />,
       );
-      const connectedChild = textField
-        .find(Connected)
-        .prop('children') as ReactElement;
 
-      expect(textField.getDOMNode().querySelector('input')).not.toBe(
-        document.activeElement,
-      );
+      expect(document.activeElement).not.toBe(textField.find('input')!.domNode);
 
-      connectedChild.props.onClick({});
+      textField.find(Connected)!.triggerKeypath('children.props.onClick', {});
 
-      expect(textField.getDOMNode().querySelector('input')).toBe(
-        document.activeElement,
-      );
+      expect(document.activeElement).toBe(textField.find('input')!.domNode);
     });
   });
 
